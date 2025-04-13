@@ -119,10 +119,12 @@ server.tool("read-sitemap", {
   const data = parser.parse(xml);
   const urls = (data.urlset.url as UrlSet[]).map(url => url.loc);
 
+  const response = { raw: xml, urls }
+
   return {
     content: [{
       type: "text",
-      text: JSON.stringify(urls)
+      text: JSON.stringify(response)
     }]
   }
 });
