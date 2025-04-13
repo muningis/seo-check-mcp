@@ -47,6 +47,7 @@ interface PageInfo {
   links?: string[];
   resources: Resource[];
   ldJson: object;
+  vitalMetrics: VitalMetrics;
 }
 
 const parser = new XMLParser();
@@ -82,7 +83,11 @@ const retrieveResources = async (hostname: string, urls: string[]): Promise<Reso
   return await Promise.all(urls.map(async url => await retrieveResource(hostname, url)));
 }
 
-const retrievePage = async (hostname: string, url: string): Promise<PageInfo> => {
+const retrievePage = async (hostname: string, url: string): Promise<{
+  pageInfo: PageInfo,
+  desktopScreenshot: string,
+  mobileScreenshot: string,
+}> => {
   const res = await fetch(url, {
     headers: HEADERS
   });
@@ -90,32 +95,51 @@ const retrievePage = async (hostname: string, url: string): Promise<PageInfo> =>
   const html = await res.text();
   const dom = parseHTML(html);
 
+  const { screenshot: desktopScreenshot, metrics } = await loadPage(driver, url, {
+    screenSize: {
+      width: 1920,
+      height: 1080
+    }
+  });
+  
+  const { screenshot: mobileScreenshot } = await loadPage(driver, url, {
+    screenSize: {
+      width: 375,
+      height: 812
+    }
+  });
+
   return {
-    headers: Object.fromEntries(res.headers.entries()),
-    meta: {
-      title: dom.querySelector("title")?.innerText ?? missingRequired("title"),
-      description: dom.querySelector("meta[name='description']")?.attributes.content ?? missingRequired("description"),
-      og: {
-        title: dom.querySelector("meta[property='og:title']")?.attributes.content ?? missingRequired("og:title"),
-        description: dom.querySelector("meta[property='og:description']")?.attributes.content ?? missingRequired("og:description"),
-        image: dom.querySelector("meta[property='og:image']")?.attributes.content ?? missingOptional("og:image"),
-      }
-    },
-    content: dom.querySelector("body")?.innerHTML ?? '',
-    links: dom.querySelectorAll("a")
-      .filter(a => a.attributes.href?.startsWith(hostname))
-      .map(a => {
-        return a.attributes.href!
-      }),
-    ldJson: JSON.parse(dom.querySelector("script[type='application/ld+json']")?.innerText ?? '{}'),
-    resources: await retrieveResources(hostname, [
-      ...(dom.querySelectorAll("link[rel='stylesheet']")
-        .map(stylesheet => stylesheet.attributes.href!)
-        .filter(Boolean)),
-      ...(dom.querySelectorAll("script[type='text/javascript']")
-        .map(stylesheet => stylesheet.attributes.href!)
-        .filter(Boolean)),
-    ])
+    desktopScreenshot,
+    mobileScreenshot,
+    pageInfo: {
+      headers: Object.fromEntries(res.headers.entries()),
+      meta: {
+        title: dom.querySelector("title")?.innerText ?? missingRequired("title"),
+        description: dom.querySelector("meta[name='description']")?.attributes.content ?? missingRequired("description"),
+        og: {
+          title: dom.querySelector("meta[property='og:title']")?.attributes.content ?? missingRequired("og:title"),
+          description: dom.querySelector("meta[property='og:description']")?.attributes.content ?? missingRequired("og:description"),
+          image: dom.querySelector("meta[property='og:image']")?.attributes.content ?? missingOptional("og:image"),
+        }
+      },
+      content: dom.querySelector("body")?.innerHTML ?? '',
+      links: dom.querySelectorAll("a")
+        .filter(a => a.attributes.href?.startsWith(hostname))
+        .map(a => {
+          return a.attributes.href!
+        }),
+      ldJson: JSON.parse(dom.querySelector("script[type='application/ld+json']")?.innerText ?? '{}'),
+      resources: await retrieveResources(hostname, [
+        ...(dom.querySelectorAll("link[rel='stylesheet']")
+          .map(stylesheet => stylesheet.attributes.href!)
+          .filter(Boolean)),
+        ...(dom.querySelectorAll("script[type='text/javascript']")
+          .map(stylesheet => stylesheet.attributes.href!)
+          .filter(Boolean)),
+      ]),
+      vitalMetrics: metrics
+    }
   }
 }
 
@@ -157,26 +181,16 @@ server.tool("scan",
     url: z.string().describe("URL to scan")
   },
   async ({ hostname, url }) => {
-    const info = retrievePage(hostname, url);
-
-    const { screenshot: desktopScreenshot } = await loadPage(driver, url, {
-      screenSize: {
-        width: 1920,
-        height: 1080
-      }
-    });
-    
-    const { screenshot: mobileScreenshot } = await loadPage(driver, url, {
-      screenSize: {
-        width: 375,
-        height: 812
-      }
-    });
+    const {
+      pageInfo,
+      desktopScreenshot,
+      mobileScreenshot
+    } = await retrievePage(hostname, url);
 
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(info)
+        text: JSON.stringify(pageInfo)
       },{
         type: "image",
         data: desktopScreenshot,
