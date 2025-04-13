@@ -4,9 +4,17 @@
     "fast-xml-parser": "^5.2.0",
     "lightningcss": "^1.29.3",
     "node-html-parser": "^7.0.1",
+    "selenium-webdriver": "^4.31.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/node": "^22.14.1"
+    "@types/node": "^22.14.1",
+    "@types/selenium-webdriver": "^4.1.28",
+    "@types/bun": "latest"
+  },
+  "name": "seo-check-mcp",
+  "private": true,
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }

@@ -3,6 +3,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { XMLParser } from "fast-xml-parser";
 import { parse as parseHTML } from "node-html-parser";
+import { driver } from "./browser/driver";
+import { takeScreenshot } from "./browser/screenshot";
 
 interface UrlSet {
   loc: string;
@@ -59,15 +61,16 @@ const HEADERS = { 'user-agent': USER_AGENT };
 
 const RESOURCES_CACHE: Record<string, Resource> = {};
 const retrieveResource = async (hostname: string, url: string): Promise<Resource> => {
-  const fullUrl = url.startsWith('/') ? `${hostname}/${url}` : url;
-  if (fullUrl in RESOURCES_CACHE) return RESOURCES_CACHE[fullUrl];
+const fullUrl = url.startsWith('/') ? `${hostname}/${url}` : url;
+  if (fullUrl in RESOURCES_CACHE)
+    return RESOURCES_CACHE[fullUrl]!;
 
   const res = await fetch(fullUrl, { headers: HEADERS });
   const headers = Object.fromEntries(res.headers.entries());
   const resource = {
     url: fullUrl,
     headers: headers,
-    mime: headers['Content-Type'] || headers['content-type']
+    mime: (headers['Content-Type'] || headers['content-type']) ?? 'application/octet-stream'
   };
 
   RESOURCES_CACHE[fullUrl] = resource;
@@ -100,13 +103,18 @@ const retrievePage = async (hostname: string, url: string): Promise<PageInfo> =>
     },
     content: dom.querySelector("body")?.innerHTML ?? '',
     links: dom.querySelectorAll("a")
-      .filter(a => a.attributes.href.startsWith(hostname))
+      .filter(a => a.attributes.href?.startsWith(hostname))
       .map(a => {
-        return a.attributes.href
+        return a.attributes.href!
       }),
     ldJson: JSON.parse(dom.querySelector("script[type='application/ld+json']")?.innerText ?? '{}'),
     resources: await retrieveResources(hostname, [
-      ...(dom.querySelectorAll("link[rel='stylesheet']")?.map?.(stylesheet => stylesheet.attributes.href))
+      ...(dom.querySelectorAll("link[rel='stylesheet']")
+        .map(stylesheet => stylesheet.attributes.href!)
+        .filter(Boolean)),
+      ...(dom.querySelectorAll("script[type='text/javascript']")
+        .map(stylesheet => stylesheet.attributes.href!)
+        .filter(Boolean)),
     ])
   }
 }
@@ -149,21 +157,31 @@ server.tool("scan",
     url: z.string().describe("URL to scan")
   },
   async ({ hostname, url }) => {
-    const info = retrievePage(hostname, url)
+    const info = retrievePage(hostname, url);
+
+    const desktopScreenshot = await takeScreenshot(driver, url, {
+      width: 1920,
+      height: 1080
+    });
+    
+    const mobileScreenshot = await takeScreenshot(driver, url, {
+      width: 375,
+      height: 812
+    });
 
     return {
       content: [{
         type: "text",
         text: JSON.stringify(info)
-      },/*{
+      },{
         type: "image",
-        data: '',
+        data: desktopScreenshot,
         mimeType: 'image/png'
       }, {
         type: "image",
-        data: '',
+        data: mobileScreenshot,
         mimeType: 'image/png'
-      }*/]
+      }]
     }
   }
 )

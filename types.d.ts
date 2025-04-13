@@ -1,0 +1,1 @@
+declare type Base64String = string;
