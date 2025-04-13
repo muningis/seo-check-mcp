@@ -4,7 +4,7 @@ import { z } from "zod";
 import { XMLParser } from "fast-xml-parser";
 import { parse as parseHTML } from "node-html-parser";
 import { driver } from "./browser/driver";
-import { takeScreenshot } from "./browser/screenshot";
+import { loadPage } from "./browser/load-page";
 
 interface UrlSet {
   loc: string;
@@ -159,14 +159,18 @@ server.tool("scan",
   async ({ hostname, url }) => {
     const info = retrievePage(hostname, url);
 
-    const desktopScreenshot = await takeScreenshot(driver, url, {
-      width: 1920,
-      height: 1080
+    const { screenshot: desktopScreenshot } = await loadPage(driver, url, {
+      screenSize: {
+        width: 1920,
+        height: 1080
+      }
     });
     
-    const mobileScreenshot = await takeScreenshot(driver, url, {
-      width: 375,
-      height: 812
+    const { screenshot: mobileScreenshot } = await loadPage(driver, url, {
+      screenSize: {
+        width: 375,
+        height: 812
+      }
     });
 
     return {

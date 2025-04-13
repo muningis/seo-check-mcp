@@ -1,19 +1,25 @@
 import { WebDriver } from 'selenium-webdriver';
 
-interface ScreenshotOptions {
-  width: number;
-  height: number;
+interface LoadPageOptions {
+  screenSize: {
+    width: number;
+    height: number;
+  }
 }
 
-export async function takeScreenshot(
+interface LoadPageReturn {
+  screenshot: Base64String;
+}
+
+export async function loadPage(
   driver: WebDriver,
   url: string,
-  options: ScreenshotOptions
-): Promise<Base64String> {
+  options: LoadPageOptions
+): Promise<LoadPageReturn> {
   try {
     await driver.manage().window().setRect({
-      width: options.width,
-      height: options.height
+      width: options.screenSize.width,
+      height: options.screenSize.height
     });
 
     await driver.get(url);
@@ -23,7 +29,9 @@ export async function takeScreenshot(
       return readyState === 'complete';
     }, 30000);
 
-    return await driver.takeScreenshot();
+    const screenshot =  await driver.takeScreenshot();
+
+    return { screenshot };
   } catch (error) {
     console.error('Error taking screenshot:', error);
     throw error;

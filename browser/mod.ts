@@ -1,2 +1,2 @@
 export { driver } from "./driver"
-export { takeScreenshot } from "./screenshot"
+export { loadPage } from "./load-page"
