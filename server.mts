@@ -1,208 +1,102 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import { XMLParser } from "fast-xml-parser";
-import { parse as parseHTML } from "node-html-parser";
-import { driver } from "./browser/driver";
-import { loadPage } from "./browser/load-page";
+/**
+ * SEO Analysis MCP Server - Long-running HTTP version
+ *
+ * Run with: bun server.mts
+ * Health check: http://localhost:3000/health
+ * MCP endpoint: http://localhost:3000/mcp
+ */
 
-interface UrlSet {
-  loc: string;
-  lastmod: string;
-  changefreq: string;
-  priority: number;
-}
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { serve } from '@hono/node-server';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import { quitDriver } from './browser/driver';
+import { registerAllTools } from './lib/tools/mod';
+import { DEFAULT_PORT, SERVER_VERSION, SERVER_NAME } from './lib/config/mod';
 
-interface MissingRequired {
-  message: string;
-}
-interface MissingOptional {
-  message: string;
-}
-const missingRequired = (name: string): MissingRequired => ({
-  message: `${name} is required, but it's missing!`
-})
-const missingOptional = (name: string): MissingOptional => ({
-  message: `${name} is advised, but it's missing!`
-})
+// =============================================================================
+// Configuration
+// =============================================================================
 
-interface Resource {
-  mime: string;
-  url: string;
-  headers: Record<string, string>;
-}
+const PORT = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : DEFAULT_PORT;
 
-interface PageInfo {
-  headers: Record<string, string>;
-  meta: {
-    title: string | MissingRequired;
-    description: string | MissingRequired;
-    og: {
-      title: string | MissingRequired;
-      description: string | MissingRequired;
-      image: string | MissingOptional;
-    }
-  }
-  content: string;
-  links?: string[];
-  resources: Resource[];
-  ldJson: object;
-  vitalMetrics: VitalMetrics;
-}
-
-const parser = new XMLParser();
+// =============================================================================
+// MCP Server Setup
+// =============================================================================
 
 const server = new McpServer({
-  name: "SEO Analysis",
-  version: "1.0.0"
+  name: SERVER_NAME,
+  version: SERVER_VERSION
 });
 
-const USER_AGENT = 'MCP Seo Analysis (https://github.com/muningis.lt/seo-check-mcp)';
-const HEADERS = { 'user-agent': USER_AGENT };
+registerAllTools(server);
 
-const RESOURCES_CACHE: Record<string, Resource> = {};
-const retrieveResource = async (hostname: string, url: string): Promise<Resource> => {
-const fullUrl = url.startsWith('/') ? `${hostname}/${url}` : url;
-  if (fullUrl in RESOURCES_CACHE)
-    return RESOURCES_CACHE[fullUrl]!;
+// =============================================================================
+// HTTP Server (Hono + Streamable HTTP Transport)
+// =============================================================================
 
-  const res = await fetch(fullUrl, { headers: HEADERS });
-  const headers = Object.fromEntries(res.headers.entries());
-  const resource = {
-    url: fullUrl,
-    headers: headers,
-    mime: (headers['Content-Type'] || headers['content-type']) ?? 'application/octet-stream'
-  };
+const transport = new WebStandardStreamableHTTPServerTransport();
+const app = new Hono();
 
-  RESOURCES_CACHE[fullUrl] = resource;
+// CORS configuration
+app.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'mcp-session-id', 'Last-Event-ID', 'mcp-protocol-version'],
+  exposeHeaders: ['mcp-session-id', 'mcp-protocol-version']
+}));
 
-  return resource;
-}
+// Health check endpoint
+app.get('/health', c => c.json({
+  status: 'ok',
+  server: `${SERVER_NAME} MCP`,
+  version: SERVER_VERSION
+}));
 
-const retrieveResources = async (hostname: string, urls: string[]): Promise<Resource[]> => {
-  return await Promise.all(urls.map(async url => await retrieveResource(hostname, url)));
-}
+// MCP endpoint - handles all HTTP methods
+app.all('/mcp', c => transport.handleRequest(c.req.raw));
 
-const retrievePage = async (hostname: string, url: string): Promise<{
-  pageInfo: PageInfo,
-  desktopScreenshot: string,
-  mobileScreenshot: string,
-}> => {
-  const res = await fetch(url, {
-    headers: HEADERS
-  });
+// =============================================================================
+// Server Startup
+// =============================================================================
 
-  const html = await res.text();
-  const dom = parseHTML(html);
+server.connect(transport).then(() => {
+  console.error(`
+╔══════════════════════════════════════════════════════════════╗
+║  ${SERVER_NAME} MCP Server v${SERVER_VERSION}                              ║
+╠══════════════════════════════════════════════════════════════╣
+║  Status:  Running                                            ║
+║  Port:    ${PORT.toString().padEnd(50)}║
+║  MCP:     http://localhost:${PORT}/mcp${' '.repeat(32 - PORT.toString().length)}║
+║  Health:  http://localhost:${PORT}/health${' '.repeat(29 - PORT.toString().length)}║
+╚══════════════════════════════════════════════════════════════╝
+  `);
 
-  const { screenshot: desktopScreenshot, metrics } = await loadPage(driver, url, {
-    screenSize: {
-      width: 1920,
-      height: 1080
-    }
-  });
-  
-  const { screenshot: mobileScreenshot } = await loadPage(driver, url, {
-    screenSize: {
-      width: 375,
-      height: 812
-    }
-  });
-
-  return {
-    desktopScreenshot,
-    mobileScreenshot,
-    pageInfo: {
-      headers: Object.fromEntries(res.headers.entries()),
-      meta: {
-        title: dom.querySelector("title")?.innerText ?? missingRequired("title"),
-        description: dom.querySelector("meta[name='description']")?.attributes.content ?? missingRequired("description"),
-        og: {
-          title: dom.querySelector("meta[property='og:title']")?.attributes.content ?? missingRequired("og:title"),
-          description: dom.querySelector("meta[property='og:description']")?.attributes.content ?? missingRequired("og:description"),
-          image: dom.querySelector("meta[property='og:image']")?.attributes.content ?? missingOptional("og:image"),
-        }
-      },
-      content: dom.querySelector("body")?.innerHTML ?? '',
-      links: dom.querySelectorAll("a")
-        .filter(a => a.attributes.href?.startsWith(hostname))
-        .map(a => {
-          return a.attributes.href!
-        }),
-      ldJson: JSON.parse(dom.querySelector("script[type='application/ld+json']")?.innerText ?? '{}'),
-      resources: await retrieveResources(hostname, [
-        ...(dom.querySelectorAll("link[rel='stylesheet']")
-          .map(stylesheet => stylesheet.attributes.href!)
-          .filter(Boolean)),
-        ...(dom.querySelectorAll("script[type='text/javascript']")
-          .map(stylesheet => stylesheet.attributes.href!)
-          .filter(Boolean)),
-      ]),
-      vitalMetrics: metrics
-    }
-  }
-}
-
-server.tool("read-sitemap", {
-  hostname: z.string().describe("Hostname of an url, including the protocol, eg. https://example.org"),
-}, async ({ hostname }) => {
-  const res = await fetch(`${hostname}/sitemap.xml`, { headers: HEADERS });
-  const xml = await res.text();
-  const data = parser.parse(xml);
-  const urls = (data.urlset.url as UrlSet[]).map(url => url.loc);
-
-  const response = { raw: xml, urls }
-
-  return {
-    content: [{
-      type: "text",
-      text: JSON.stringify(response)
-    }]
-  }
+  serve({ fetch: app.fetch, port: PORT });
 });
 
-server.tool("read-robots-txt", {
-  hostname: z.string().describe("Hostname of an url, including the protocol, eg. https://example.org"),
-}, async ({ hostname }) => {
-  const res = await fetch(`${hostname}/robots.txt`, { headers: HEADERS });
-  const txt = await res.text();
+// =============================================================================
+// Graceful Shutdown
+// =============================================================================
 
-  return {
-    content: [{
-      type: "text",
-      text: txt
-    }]
+process.on('SIGINT', async () => {
+  console.error('\nShutting down gracefully...');
+  try {
+    await quitDriver();
+    console.error('WebDriver closed.');
+  } catch (e) {
+    console.error('Error closing WebDriver:', e);
   }
+  process.exit(0);
 });
 
-server.tool("scan",
-  {
-    hostname: z.string().describe("Hostname of an url, including the protocol, eg. https://example.org"),
-    url: z.string().describe("URL to scan")
-  },
-  async ({ hostname, url }) => {
-    const {
-      pageInfo,
-      desktopScreenshot,
-      mobileScreenshot
-    } = await retrievePage(hostname, url);
-
-    return {
-      content: [{
-        type: "text",
-        text: JSON.stringify(pageInfo)
-      },{
-        type: "image",
-        data: desktopScreenshot,
-        mimeType: 'image/png'
-      }, {
-        type: "image",
-        data: mobileScreenshot,
-        mimeType: 'image/png'
-      }]
-    }
+process.on('SIGTERM', async () => {
+  console.error('\nReceived SIGTERM, shutting down...');
+  try {
+    await quitDriver();
+  } catch (e) {
+    // Ignore
   }
-)
-
-const transport = new StdioServerTransport();
-await server.connect(transport);
+  process.exit(0);
+});
