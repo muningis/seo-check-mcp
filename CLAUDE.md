@@ -67,7 +67,7 @@ Add this to your `claude_desktop_config.json`:
 
 Replace `/path/to/seo-check-mcp` with the actual path to this project.
 
-## Available Tools (22 total)
+## Available Tools (24 total)
 
 ### Core Tools
 | Tool | Description |
@@ -86,10 +86,16 @@ Replace `/path/to/seo-check-mcp` with the actual path to this project.
 ### Technical SEO
 | Tool | Description |
 |------|-------------|
-| `validate-schema` | JSON-LD/Schema.org validation with suggestions |
+| `validate-schema` | JSON-LD/Schema.org validation with @graph analysis and completeness scoring |
 | `analyze-sitemap` | Deep sitemap analysis (freshness, priorities) |
 | `check-internal-links` | Internal linking structure analysis |
 | `find-broken-links` | Broken link detection with status codes |
+
+### Accessibility & Social
+| Tool | Description |
+|------|-------------|
+| `analyze-semantic` | Semantic HTML and ARIA accessibility analysis (WCAG 2.1 Level A) |
+| `analyze-social-meta` | Open Graph, Twitter Cards, and Facebook meta analysis with previews |
 
 ### On-Page Optimization
 | Tool | Description |
@@ -154,7 +160,7 @@ lib/
 │   ├── headings.ts     # Heading structure suggestions
 │   ├── url.ts          # URL structure suggestions
 │   └── mod.ts
-├── tools/              # MCP tool implementations (22 tools)
+├── tools/              # MCP tool implementations (24 tools)
 │   ├── read-sitemap.ts
 │   ├── read-robots-txt.ts
 │   ├── scan.ts
@@ -177,6 +183,8 @@ lib/
 │   ├── fix-schema.ts
 │   ├── generate-seo-tasks.ts
 │   ├── improve-content.ts
+│   ├── analyze-semantic.ts
+│   ├── analyze-social-meta.ts
 │   └── mod.ts
 └── types/              # TypeScript interfaces
     ├── validation.ts
@@ -200,6 +208,9 @@ lib/
 - `ContentInstruction`: Structured content improvement instruction with line numbers
 - `ContentFixResult`: Content analysis result with category scores
 - `ContentAnalysisResult`: Raw analysis metrics (readability, SEO, structure)
+- `SemanticAnalysisResult`: Semantic HTML and ARIA accessibility analysis
+- `SchemaValidationResult`: Enhanced JSON-LD validation with @graph and scoring
+- `SocialMetaAnalysisResult`: Social media meta analysis with platform previews
 
 ## Technical Stack
 

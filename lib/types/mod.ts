@@ -47,3 +47,32 @@ export type {
   StructureMetrics,
   ContentAnalysisResult,
 } from './content-instructions';
+export type {
+  WCAGLevel,
+  SemanticElement,
+  LandmarkElements,
+  AriaInfo,
+  AccessibilityIssue,
+  SemanticScore,
+  SemanticAnalysisResult,
+} from './semantic';
+export type {
+  SchemaTypeDefinition,
+  PropertyValidation,
+  SchemaAnalysis,
+  GraphNode,
+  GraphAnalysis,
+  SchemaValidationScore,
+  SchemaValidationResult,
+} from './jsonld';
+export type {
+  OpenGraphData,
+  TwitterCardType,
+  TwitterCardData,
+  FacebookData,
+  SocialPreview,
+  ImageValidation,
+  SocialMetaScore,
+  PlatformAnalysis,
+  SocialMetaAnalysisResult,
+} from './social-meta';

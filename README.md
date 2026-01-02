@@ -4,7 +4,7 @@ A Model Context Protocol (MCP) server that provides comprehensive SEO analysis t
 
 ## Features
 
-- **22 SEO Analysis & Fix Tools**
+- **24 SEO Analysis & Fix Tools**
 - **Actionable Instructions** for Claude Code to apply fixes directly
 - **Dual Transport Support**: HTTP (Claude Code) and stdio (Claude Desktop)
 - **Headless Chrome** via Selenium for screenshots and Core Web Vitals
@@ -62,7 +62,7 @@ Or add to your global `~/.claude/settings.json`:
 
 ### 3. Use the tools
 
-The 22 SEO tools will be available in Claude Code automatically.
+The 24 SEO tools will be available in Claude Code automatically.
 
 ## Claude Desktop Integration (stdio)
 
@@ -82,7 +82,7 @@ Add to your `claude_desktop_config.json`:
 
 Replace `/path/to/seo-check-mcp` with the actual path to this project.
 
-## Available Tools (22 total)
+## Available Tools (24 total)
 
 ### Core Tools
 
@@ -104,10 +104,17 @@ Replace `/path/to/seo-check-mcp` with the actual path to this project.
 
 | Tool | Description |
 |------|-------------|
-| `validate-schema` | JSON-LD/Schema.org validation with suggestions |
+| `validate-schema` | JSON-LD/Schema.org validation with @graph analysis and completeness scoring |
 | `analyze-sitemap` | Deep sitemap analysis (freshness, priorities) |
 | `check-internal-links` | Internal linking structure analysis |
 | `find-broken-links` | Broken link detection with status codes |
+
+### Accessibility & Social
+
+| Tool | Description |
+|------|-------------|
+| `analyze-semantic` | Semantic HTML and ARIA accessibility analysis (WCAG 2.1 Level A) |
+| `analyze-social-meta` | Open Graph, Twitter Cards, and Facebook meta analysis with platform previews |
 
 ### On-Page Optimization
 
@@ -253,7 +260,7 @@ lib/
 ├── extraction/         # Page parsing helpers
 ├── page/               # Page retrieval orchestration
 ├── suggestions/        # SEO improvement suggestions
-├── tools/              # MCP tool implementations (21 tools)
+├── tools/              # MCP tool implementations (24 tools)
 └── types/              # TypeScript interfaces
 ```
 

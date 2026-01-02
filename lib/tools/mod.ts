@@ -36,6 +36,10 @@ import { registerFixSchema } from './fix-schema';
 import { registerGenerateSeoTasks } from './generate-seo-tasks';
 import { registerImproveContent } from './improve-content';
 
+// Accessibility and social tools
+import { registerAnalyzeSemantic } from './analyze-semantic';
+import { registerAnalyzeSocialMeta } from './analyze-social-meta';
+
 export const registerAllTools = (server: McpServer): void => {
   // Existing tools
   registerReadSitemap(server);
@@ -72,6 +76,10 @@ export const registerAllTools = (server: McpServer): void => {
   registerFixSchema(server);
   registerGenerateSeoTasks(server);
   registerImproveContent(server);
+
+  // Accessibility and social tools
+  registerAnalyzeSemantic(server);
+  registerAnalyzeSocialMeta(server);
 };
 
 // Export individual registrations for selective use
@@ -96,3 +104,5 @@ export { registerFixHeadings } from './fix-headings';
 export { registerFixSchema } from './fix-schema';
 export { registerGenerateSeoTasks } from './generate-seo-tasks';
 export { registerImproveContent } from './improve-content';
+export { registerAnalyzeSemantic } from './analyze-semantic';
+export { registerAnalyzeSocialMeta } from './analyze-social-meta';

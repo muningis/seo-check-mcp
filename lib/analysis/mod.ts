@@ -41,3 +41,13 @@ export {
   findLongParagraphs,
   detectPassiveVoice,
 } from './content-analyzer';
+
+export {
+  EXTENDED_SCHEMA_TYPES,
+  getSchemaType,
+  hasProperty,
+  analyzeSchema,
+  analyzeGraph,
+  calculateSchemaScore,
+  suggestMissingSchemas,
+} from './jsonld';
