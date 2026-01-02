@@ -31,3 +31,19 @@ export type {
   SEOTask,
   SEOTasksResult,
 } from './instructions';
+export type {
+  ContentCategory,
+  ContentTargetType,
+  ContentActionType,
+  ContentTarget,
+  ContentValue,
+  ContentInstruction,
+  CategoryScore,
+  ContentAnalysisSummary,
+  ContentFixResult,
+  ContentAnalysisOptions,
+  ReadabilityMetrics,
+  SEOMetrics,
+  StructureMetrics,
+  ContentAnalysisResult,
+} from './content-instructions';

@@ -67,7 +67,7 @@ Add this to your `claude_desktop_config.json`:
 
 Replace `/path/to/seo-check-mcp` with the actual path to this project.
 
-## Available Tools (21 total)
+## Available Tools (22 total)
 
 ### Core Tools
 | Tool | Description |
@@ -113,6 +113,7 @@ Replace `/path/to/seo-check-mcp` with the actual path to this project.
 | `fix-headings` | Returns actionable instructions for heading structure fixes |
 | `fix-schema` | Returns JSON-LD schema templates ready to add |
 | `generate-seo-tasks` | Generates prioritized SEO task list with recommended tools |
+| `improve-content` | Analyzes local markdown files for SEO, readability, and structure improvements |
 
 ## Architecture
 
@@ -128,6 +129,7 @@ lib/
 ├── analysis/           # Text analysis & scoring algorithms
 │   ├── text.ts         # Readability, keyword extraction
 │   ├── scoring.ts      # SEO scoring formulas
+│   ├── content-analyzer.ts  # Markdown content analysis
 │   └── mod.ts
 ├── cache/              # Resource caching
 │   ├── resource-cache.ts
@@ -152,7 +154,7 @@ lib/
 │   ├── headings.ts     # Heading structure suggestions
 │   ├── url.ts          # URL structure suggestions
 │   └── mod.ts
-├── tools/              # MCP tool implementations (21 tools)
+├── tools/              # MCP tool implementations (22 tools)
 │   ├── read-sitemap.ts
 │   ├── read-robots-txt.ts
 │   ├── scan.ts
@@ -174,12 +176,14 @@ lib/
 │   ├── fix-headings.ts
 │   ├── fix-schema.ts
 │   ├── generate-seo-tasks.ts
+│   ├── improve-content.ts
 │   └── mod.ts
 └── types/              # TypeScript interfaces
     ├── validation.ts
     ├── content.ts
     ├── page-info.ts
     ├── instructions.ts
+    ├── content-instructions.ts  # Content improvement types
     └── mod.ts
 ```
 
@@ -193,6 +197,9 @@ lib/
 - `FixResult`: Fix tool response with instructions array
 - `SEOTask`: Prioritized task for generate-seo-tasks
 - `SEOTasksResult`: Complete task list with score and quick wins
+- `ContentInstruction`: Structured content improvement instruction with line numbers
+- `ContentFixResult`: Content analysis result with category scores
+- `ContentAnalysisResult`: Raw analysis metrics (readability, SEO, structure)
 
 ## Technical Stack
 

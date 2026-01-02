@@ -28,3 +28,16 @@ export {
 } from './scoring';
 
 export type { ReadabilityScores, SEOScore, SEOScoreDetails } from './scoring';
+
+export {
+  analyzeMarkdownContent,
+  generateContentInstructions,
+  calculateCategoryScores,
+  parseMarkdownLines,
+  extractFrontmatter,
+  stripMarkdown,
+  extractMarkdownHeadings,
+  findLongSentences,
+  findLongParagraphs,
+  detectPassiveVoice,
+} from './content-analyzer';

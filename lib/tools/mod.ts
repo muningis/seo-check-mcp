@@ -34,6 +34,7 @@ import { registerFixImages } from './fix-images';
 import { registerFixHeadings } from './fix-headings';
 import { registerFixSchema } from './fix-schema';
 import { registerGenerateSeoTasks } from './generate-seo-tasks';
+import { registerImproveContent } from './improve-content';
 
 export const registerAllTools = (server: McpServer): void => {
   // Existing tools
@@ -70,6 +71,7 @@ export const registerAllTools = (server: McpServer): void => {
   registerFixHeadings(server);
   registerFixSchema(server);
   registerGenerateSeoTasks(server);
+  registerImproveContent(server);
 };
 
 // Export individual registrations for selective use
@@ -93,3 +95,4 @@ export { registerFixImages } from './fix-images';
 export { registerFixHeadings } from './fix-headings';
 export { registerFixSchema } from './fix-schema';
 export { registerGenerateSeoTasks } from './generate-seo-tasks';
+export { registerImproveContent } from './improve-content';

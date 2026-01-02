@@ -4,7 +4,7 @@ A Model Context Protocol (MCP) server that provides comprehensive SEO analysis t
 
 ## Features
 
-- **21 SEO Analysis & Fix Tools**
+- **22 SEO Analysis & Fix Tools**
 - **Actionable Instructions** for Claude Code to apply fixes directly
 - **Dual Transport Support**: HTTP (Claude Code) and stdio (Claude Desktop)
 - **Headless Chrome** via Selenium for screenshots and Core Web Vitals
@@ -62,7 +62,7 @@ Or add to your global `~/.claude/settings.json`:
 
 ### 3. Use the tools
 
-The 21 SEO tools will be available in Claude Code automatically.
+The 22 SEO tools will be available in Claude Code automatically.
 
 ## Claude Desktop Integration (stdio)
 
@@ -82,7 +82,7 @@ Add to your `claude_desktop_config.json`:
 
 Replace `/path/to/seo-check-mcp` with the actual path to this project.
 
-## Available Tools (21 total)
+## Available Tools (22 total)
 
 ### Core Tools
 
@@ -136,6 +136,7 @@ These tools return structured instructions that Claude Code can execute:
 | `fix-headings` | Heading hierarchy fixes with before/after HTML |
 | `fix-schema` | JSON-LD schema templates ready to add |
 | `generate-seo-tasks` | Prioritized task list with recommended tools |
+| `improve-content` | SEO, readability, and structure improvements for local markdown files |
 
 ## Example Workflow with Claude Code
 
